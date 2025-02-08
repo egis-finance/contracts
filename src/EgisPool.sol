@@ -6,10 +6,21 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract EgisPool is Ownable, ReentrancyGuard {
+
+    // Structs
+    struct EVE {
+        bool isRegistered;
+        address rewardToken;
+        uint256 lastDistributionTime;
+    }
+
     // State variables
     mapping(address => uint256) public stakedAmount;
     mapping(address => uint256) public operatorStake;
     mapping(address => bool) public isOperator;
+    mapping(address => EVE) public registeredEVEs;
+    mapping(address => uint256) public currentEpochByEVE;
+
     uint256 public totalStaked;
     uint256 public operatorMinStake;
 
@@ -18,6 +29,8 @@ contract EgisPool is Ownable, ReentrancyGuard {
     event Unstaked(address indexed user, uint256 amount);
     event OperatorRegistered(address indexed operator);
     event RewardDistributed(address indexed user, uint256 amount);
+    event EVERegistered(address indexed eve, address rewardToken);
+
 
     /* _operatorMinStake: Minimum stake in wei required for an operator to register. */
     constructor(uint256 _operatorMinStake) Ownable(msg.sender) {
@@ -47,6 +60,21 @@ contract EgisPool is Ownable, ReentrancyGuard {
     // Basic reward distribution (to be expanded)
     function distributeRewards() external onlyOwner {
         // Implement reward distribution logic
+
+    // Register an EVE with its reward token
+    function registerEVE(address rewardToken) external {
+        require(!registeredEVEs[msg.sender].isRegistered, "EVE already registered");
+        require(rewardToken != address(0), "Invalid reward token");
+
+        registeredEVEs[msg.sender] = EVE({
+            isRegistered: true,
+            rewardToken: rewardToken,
+            lastDistributionTime: block.timestamp
+        });
+
+        emit EVERegistered(msg.sender, rewardToken);
+    }
+
     }
 
     // View functions for UI/CLI
