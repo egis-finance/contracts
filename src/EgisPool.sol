@@ -3,9 +3,11 @@ pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract EgisPool is Ownable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
 
     // Structs
     struct EVE {
@@ -14,11 +16,19 @@ contract EgisPool is Ownable, ReentrancyGuard {
         uint256 lastDistributionTime;
     }
 
+    struct RewardEpoch {
+        uint256 totalRewardAmount;
+        uint256 totalStakedAtDistribution;
+        uint256 distributionTime;
+        mapping(address => bool) claimed;
+    }
+
     // State variables
     mapping(address => uint256) public stakedAmount;
     mapping(address => uint256) public operatorStake;
     mapping(address => bool) public isOperator;
     mapping(address => EVE) public registeredEVEs;
+    mapping(address => mapping(uint256 => RewardEpoch)) public rewardEpochs;
     mapping(address => uint256) public currentEpochByEVE;
 
     uint256 public totalStaked;
@@ -31,6 +41,8 @@ contract EgisPool is Ownable, ReentrancyGuard {
     event RewardDistributed(address indexed user, uint256 amount);
     event EVERegistered(address indexed eve, address rewardToken);
 
+    event RewardsDistributed(address indexed eve, uint256 epoch, uint256 amount);
+    event RewardsClaimed(address indexed operator, address indexed eve, uint256 epoch, uint256 amount);
 
     /* _operatorMinStake: Minimum stake in wei required for an operator to register. */
     constructor(uint256 _operatorMinStake) Ownable(msg.sender) {
@@ -57,20 +69,36 @@ contract EgisPool is Ownable, ReentrancyGuard {
         emit OperatorRegistered(msg.sender);
     }
 
-    // Basic reward distribution (to be expanded)
-    function distributeRewards() external onlyOwner {
-        // Implement reward distribution logic
+    // Distribute rewards for an epoch
+    function distributeRewards(uint256 amount) external nonReentrant onlyOwner {
+        require(registeredEVEs[msg.sender].isRegistered, "EVE not registered");
+        require(amount > 0, "Amount must be greater than 0");
+
+        EVE storage eve = registeredEVEs[msg.sender];
+        uint256 currentEpoch = currentEpochByEVE[msg.sender];
+
+        // Transfer rewards to this contract
+        IERC20(eve.rewardToken).safeTransferFrom(msg.sender, address(this), amount);
+
+        // Setup new reward epoch
+        RewardEpoch storage epoch = rewardEpochs[msg.sender][currentEpoch];
+        epoch.totalRewardAmount = amount;
+        epoch.totalStakedAtDistribution = totalStaked;
+        epoch.distributionTime = block.timestamp;
+
+        eve.lastDistributionTime = block.timestamp;
+        currentEpochByEVE[msg.sender] = currentEpoch + 1;
+
+        emit RewardsDistributed(msg.sender, currentEpoch, amount);
+    }
 
     // Register an EVE with its reward token
     function registerEVE(address rewardToken) external {
         require(!registeredEVEs[msg.sender].isRegistered, "EVE already registered");
         require(rewardToken != address(0), "Invalid reward token");
 
-        registeredEVEs[msg.sender] = EVE({
-            isRegistered: true,
-            rewardToken: rewardToken,
-            lastDistributionTime: block.timestamp
-        });
+        registeredEVEs[msg.sender] =
+            EVE({isRegistered: true, rewardToken: rewardToken, lastDistributionTime: block.timestamp});
 
         emit EVERegistered(msg.sender, rewardToken);
     }
