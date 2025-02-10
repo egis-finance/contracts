@@ -149,5 +149,19 @@ contract EgisPool is Ownable, ReentrancyGuard {
             operatorStakeAtDistribution, rewardEpoch.totalRewardAmount, rewardEpoch.totalStakedAtDistribution
         );
     }
+
+    function getCurrentAPR(address eve) external view returns (uint256) {
+        require(registeredEVEs[eve].isRegistered, "EVE not registered");
+
+        uint256 currentEpoch = currentEpochByEVE[eve];
+
+        if (currentEpoch == 0) return 0;
+
+        RewardEpoch storage lastEpoch = rewardEpochs[eve][currentEpoch - 1];
+        uint256 stakingPeriod = block.timestamp - lastEpoch.distributionTime;
+
+        if (stakingPeriod == 0) return 0;
+
+        return EgisRewards.calculateAPR(lastEpoch.totalRewardAmount, stakingPeriod, lastEpoch.totalStakedAtDistribution);
     }
 }
