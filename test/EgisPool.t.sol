@@ -35,4 +35,3 @@ contract EggPoolTest is Test {
         assertTrue(isOp);
     }
 }
-

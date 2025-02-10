@@ -103,10 +103,45 @@ contract EgisPool is Ownable, ReentrancyGuard {
         emit EVERegistered(msg.sender, rewardToken);
     }
 
+    // Claim rewards for a specific EVE and epoch
+    function claimRewards(address eve, uint256 epoch) external nonReentrant {
+        require(isOperator[msg.sender], "Not an operator");
+        require(registeredEVEs[eve].isRegistered, "EVE not registered");
+
+        RewardEpoch storage rewardEpoch = rewardEpochs[eve][epoch];
+        require(rewardEpoch.totalRewardAmount > 0, "No rewards for epoch");
+        require(!rewardEpoch.claimed[msg.sender], "Already claimed");
+        require(rewardEpoch.distributionTime > 0, "Epoch not initialized");
+
+        uint256 operatorStakeAtDistribution = stakedAmount[msg.sender];
+        uint256 rewardAmount =
+            (operatorStakeAtDistribution * rewardEpoch.totalRewardAmount) / rewardEpoch.totalStakedAtDistribution;
+
+        rewardEpoch.claimed[msg.sender] = true;
+
+        // Transfer rewards to operator
+        IERC20(registeredEVEs[eve].rewardToken).safeTransfer(msg.sender, rewardAmount);
+
+        emit RewardsClaimed(msg.sender, eve, epoch, rewardAmount);
     }
 
     // View functions for UI/CLI
     function getStakeInfo(address user) external view returns (uint256 userStake, bool userIsOperator) {
         return (stakedAmount[user], isOperator[user]);
+    }
+
+    // View function to check claimable rewards
+    function getClaimableRewards(address operator, address eve, uint256 epoch) external view returns (uint256) {
+        if (
+            !isOperator[operator] || !registeredEVEs[eve].isRegistered || rewardEpochs[eve][epoch].claimed[operator]
+                || rewardEpochs[eve][epoch].totalStakedAtDistribution == 0
+        ) {
+            return 0;
+        }
+
+        RewardEpoch storage rewardEpoch = rewardEpochs[eve][epoch];
+        uint256 operatorStakeAtDistribution = stakedAmount[operator];
+
+        return (operatorStakeAtDistribution * rewardEpoch.totalRewardAmount) / rewardEpoch.totalStakedAtDistribution;
     }
 }
