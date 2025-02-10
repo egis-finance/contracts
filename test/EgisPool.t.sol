@@ -18,7 +18,7 @@ contract EggPoolTest is Test {
         pool.stake{value: amount}();
     }
 
-    function test_Stake() public {
+    function testStake() public {
         uint256 amount = 1000 gwei;
         _setupStake(amount);
         // Check combined stake (amount + operator registration)
@@ -27,7 +27,7 @@ contract EggPoolTest is Test {
         assertTrue(isOp);
     }
 
-    function testFuzz_Stake(uint256 x) public {
+    function testFuzzStake(uint256 x) public {
         vm.assume(x > 0 && x < type(uint256).max - 1);
         _setupStake(x);
         (uint256 staked, bool isOp) = pool.getStakeInfo(address(this));
