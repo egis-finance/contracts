@@ -5,9 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./EgisRewards.sol";
 
 contract EgisPool is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
+    using EgisRewards for *;
 
     // Structs
     struct EVE {
@@ -114,8 +116,9 @@ contract EgisPool is Ownable, ReentrancyGuard {
         require(rewardEpoch.distributionTime > 0, "Epoch not initialized");
 
         uint256 operatorStakeAtDistribution = stakedAmount[msg.sender];
-        uint256 rewardAmount =
-            (operatorStakeAtDistribution * rewardEpoch.totalRewardAmount) / rewardEpoch.totalStakedAtDistribution;
+        uint256 rewardAmount = EgisRewards.calculateReward(
+            operatorStakeAtDistribution, rewardEpoch.totalRewardAmount, rewardEpoch.totalStakedAtDistribution
+        );
 
         rewardEpoch.claimed[msg.sender] = true;
 
@@ -142,6 +145,9 @@ contract EgisPool is Ownable, ReentrancyGuard {
         RewardEpoch storage rewardEpoch = rewardEpochs[eve][epoch];
         uint256 operatorStakeAtDistribution = stakedAmount[operator];
 
-        return (operatorStakeAtDistribution * rewardEpoch.totalRewardAmount) / rewardEpoch.totalStakedAtDistribution;
+        return EgisRewards.calculateReward(
+            operatorStakeAtDistribution, rewardEpoch.totalRewardAmount, rewardEpoch.totalStakedAtDistribution
+        );
+    }
     }
 }
