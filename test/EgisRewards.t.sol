@@ -39,8 +39,6 @@ contract EgisRewardsTest is Test {
         // 333.333333333333333333/1000 * 100 = 33.3333333333333333333 tokens
         uint256 expectedRawAmount = (operatorStake * totalReward) / totalStaked;
         assertEq(calc.rawAmount, expectedRawAmount, "Incorrect raw amount");
-        console2.log("Raw Amount (in tokens):", calc.rawAmount / PRECISION);
-        console2.log("Precision Loss (in tokens):", calc.precisionLoss / PRECISION);
     }
 
     function testAPRCalculation() public pure {
