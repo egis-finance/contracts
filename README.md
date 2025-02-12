@@ -1,66 +1,29 @@
-## Foundry
+# Egis Finance Shared Security Contracts Core
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+This repository contains the core smart contracts for Egis Finance's shared security infrastructure.  This MVP provides a staking pool and a reward distribution mechanism.
 
-Foundry consists of:
+## Contracts
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- **`EgisPool.sol`**: This contract manages the staking pool.  Users can stake ETH to become operators and participate in securing the system. Operators can register EVEs (External Verification Entities) and claim rewards.
 
-## Documentation
-
-https://book.getfoundry.sh/
+- **`EgisRewards.sol`**: This library contains functions for calculating rewards based on operator stake and total staked amount.  It ensures fair and precise reward distribution.
 
 ## Usage
 
-### Build
+The contracts are built using Foundry.  To get started:
 
-```shell
-$ forge build
-```
+1. **Clone the repository:** `git clone <repository_url>`
+2. **Install Foundry:** Follow the instructions at [https://book.getfoundry.sh/](https://book.getfoundry.sh/)
+3. **Install dependencies:** `forge install`
+4. **Build the contracts:** `forge build`
+5. **Run the tests:** `forge test`
 
-### Test
+## Testing
 
-```shell
-$ forge test
-```
+[![Tests](https://github.com/egis-finance/contracts/actions/workflows/test.yml/badge.svg)](https://github.com/egis-finance/contracts/actions/workflows/test.yml)
 
-### Format
 
-```shell
-$ forge fmt
-```
+## License
 
-### Gas Snapshots
+MIT License
 
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
